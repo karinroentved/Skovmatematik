@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skovmatematik – Lineære Funktioner</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap');
+
+  :root {
+    --forest-dark: #1a3a1a;
+    --forest-mid: #2d5a27;
+    --forest-light: #4a8c3f;
+    --forest-bright: #6ab04c;
+    --leaf: #a8e063;
+    --sky: #c8e6c9;
+    --sky2: #e8f5e9;
+    --bark: #5d4037;
+    --bark-light: #8d6e63;
+    --cream: #f9f5e7;
+    --gold: #f9ca24;
+    --amber: #f0932b;
+    --red: #eb4d4b;
+    --blue: #4a90d9;
+    --purple: #6c5ce7;
+    --text: #1a3a1a;
+    --text-light: #4a8c3f;
+    --white: #fff;
+    --shadow: rgba(26,58,26,0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(180deg, #87ceeb 0%, #c8e6c9 40%, #4a8c3f 40%, #2d5a27 100%);
+    min-height: 100vh;
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  /* ===================== FOREST BACKGROUND ===================== */
+  .forest-bg {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+    overflow: hidden;
+  }
+  .sun { position: absolute; top: 30px; right: 80px; width: 70px; height: 70px;
+    background: radial-gradient(circle, #ffe082, #ffcc02);
+    border-radius: 50%;
+    box-shadow: 0 0 40px 20px rgba(255,220,50,0.4);
+    animation: pulse-sun 4s ease-in-out infinite;
+  }
+  @keyframes pulse-sun { 0%,100%{box-shadow:0 0 40px 20px rgba(255,220,50,0.4)} 50%{box-shadow:0 0 60px 30px rgba(255,220,50,0.6)} }
+
+  .cloud { position: absolute; background: rgba(255,255,255,0.85); border-radius: 50px; }
+  .cloud::before,.cloud::after { content:''; position:absolute; background:rgba(255,255,255,0.85); border-radius:50%; }
+  .cloud1 { width:90px;height:30px;top:60px;left:10%; animation: drift 18s linear infinite; }
+  .cloud1::before { width:45px;height:45px;top:-20px;left:10px; }
+  .cloud1::after { width:35px;height:35px;top:-15px;left:40px; }
+  .cloud2 { width:70px;height:25px;top:90px;left:50%; animation: drift 25s linear infinite 5s; }
+  .cloud2::before { width:35px;height:35px;top:-15px;left:8px; }
+  .cloud2::after { width:28px;height:28px;top:-10px;left:30px; }
+  @keyframes drift { from{transform:translateX(-120px)} to{transform:translateX(calc(100vw + 120px))} }
+
+  /* Trees */
+  .tree { position: absolute; bottom: 0; }
+  .tree svg { display: block; }
+
+  /* Birds */
+  .bird { position: absolute; font-size: 20px; animation: fly-bird 20s linear infinite; opacity: 0.8; }
+  .bird1 { top: 100px; animation-delay: 0s; }
+  .bird2 { top: 130px; animation-delay: 7s; font-size: 14px; }
+  @keyframes fly-bird {
+    from { left: -50px; transform: scaleX(1); }
+    to { left: 110%; transform: scaleX(1); }
+  }
+
+  /* Deer */
+  .deer { position: absolute; bottom: 38%; font-size: 36px; animation: deer-walk 30s linear infinite; }
+  @keyframes deer-walk { from{left:-60px} to{left:110%} }
+
+  /* Firefly */
+  .firefly { position: absolute; width: 5px; height: 5px; background: #ffe066; border-radius: 50%;
+    box-shadow: 0 0 8px 3px #ffe066; animation: firefly-anim 3s ease-in-out infinite; }
+  @keyframes firefly-anim {
+    0%,100%{opacity:0;transform:translate(0,0)}
+    25%{opacity:1;transform:translate(10px,-15px)}
+    50%{opacity:0.5;transform:translate(-8px,-25px)}
+    75%{opacity:1;transform:translate(12px,-10px)}
+  }
+
+  /* ===================== LAYOUT ===================== */
+  .wrapper { position: relative; z-index: 1; max-width: 820px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  /* ===================== HEADER ===================== */
+  .header { text-align: center; padding: 20px 0 10px; }
+  .header h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 3rem; color: var(--white);
+    text-shadow: 3px 4px 0 var(--forest-dark), 0 0 30px rgba(255,255,255,0.3);
+    letter-spacing: 1px;
+  }
+  .header p { color: var(--leaf); font-size: 1.1rem; font-weight: 600; margin-top: 4px; text-shadow: 1px 1px 0 var(--forest-dark); }
+
+  /* ===================== LEVEL MAP ===================== */
+  .level-map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 20px 0; }
+  .level-btn {
+    background: var(--cream); border: 3px solid var(--bark-light);
+    border-radius: 16px; padding: 14px 8px;
+    cursor: pointer; text-align: center;
+    font-family: 'Fredoka One', cursive;
+    transition: all 0.2s; position: relative;
+    box-shadow: 0 4px 0 var(--bark);
+  }
+  .level-btn:hover:not(.locked) { transform: translateY(-3px); box-shadow: 0 7px 0 var(--bark); }
+  .level-btn:active:not(.locked) { transform: translateY(1px); box-shadow: 0 2px 0 var(--bark); }
+  .level-btn.locked { background: #ccc; border-color: #aaa; cursor: not-allowed; opacity: 0.7; box-shadow: 0 4px 0 #888; }
+  .level-btn.completed { border-color: var(--forest-bright); background: #e8f5e9; }
+  .level-btn.active-level { border-color: var(--gold); background: #fffde7; }
+  .level-icon { font-size: 2rem; margin-bottom: 4px; }
+  .level-title { font-size: 0.8rem; color: var(--text); font-weight: 700; font-family: 'Nunito', sans-serif; }
+  .level-num { font-size: 1.3rem; color: var(--forest-dark); }
+  .stars { font-size: 1rem; letter-spacing: 2px; }
+  .lock-icon { position: absolute; top: 6px; right: 8px; font-size: 1rem; }
+
+  /* ===================== GAME PANEL ===================== */
+  .game-panel {
+    background: rgba(249,245,231,0.97);
+    border: 3px solid var(--bark-light);
+    border-radius: 20px; padding: 24px;
+    box-shadow: 0 8px 0 var(--bark), 0 12px 30px var(--shadow);
+    margin-top: 10px;
+  }
+  .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+  .panel-title { font-family: 'Fredoka One', cursive; font-size: 1.6rem; color: var(--forest-dark); }
+  .progress-dots { display: flex; gap: 8px; }
+  .dot { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid var(--bark-light); background: var(--cream); transition: all 0.3s; }
+  .dot.correct { background: var(--forest-bright); border-color: var(--forest-dark); }
+  .dot.wrong { background: var(--red); border-color: #a00; }
+  .dot.current { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(249,202,36,0.4); }
+
+  .question-box { margin-bottom: 20px; }
+  .question-text { font-size: 1.05rem; font-weight: 700; color: var(--forest-dark); margin-bottom: 14px; line-height: 1.5; }
+  .context-badge {
+    display: inline-block; background: var(--forest-light); color: var(--white);
+    font-size: 0.8rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-bottom: 10px;
+  }
+
+  /* Canvas for graphs */
+  .canvas-wrap { display: flex; justify-content: center; margin: 10px 0; }
+  canvas.graph { border: 2px solid var(--bark-light); border-radius: 10px; background: #fff; max-width: 100%; }
+
+  /* Multiple choice */
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .choice-btn {
+    padding: 12px 16px; border: 2.5px solid var(--bark-light);
+    background: var(--white); border-radius: 12px;
+    font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 700;
+    cursor: pointer; transition: all 0.15s; color: var(--forest-dark);
+  }
+  .choice-btn:hover:not(:disabled) { background: var(--sky); border-color: var(--forest-light); transform: scale(1.02); }
+  .choice-btn.selected-correct { background: #c8e6c9; border-color: var(--forest-bright); color: var(--forest-dark); }
+  .choice-btn.selected-wrong { background: #ffcdd2; border-color: var(--red); }
+  .choice-btn.show-correct { background: #c8e6c9; border-color: var(--forest-bright); }
+
+  /* Text input */
+  .input-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .input-label { font-size: 1.1rem; font-weight: 700; color: var(--forest-dark); }
+  .answer-input {
+    border: 2.5px solid var(--bark-light); border-radius: 10px;
+    padding: 8px 14px; font-size: 1.05rem; font-family: 'Nunito', sans-serif;
+    font-weight: 700; color: var(--forest-dark); background: var(--white);
+    width: 180px; outline: none; transition: border 0.2s;
+  }
+  .answer-input:focus { border-color: var(--forest-bright); }
+  .answer-input.correct { border-color: var(--forest-bright); background: #c8e6c9; }
+  .answer-input.wrong { border-color: var(--red); background: #ffcdd2; }
+
+  /* Buttons row */
+  .btn-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; align-items: center; }
+  .btn-row-main { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .btn-group-left { display: flex; gap: 10px; align-items: center; }
+  .btn-group-right { display: flex; gap: 10px; align-items: center; margin-left: auto; }
+  .btn {
+    padding: 10px 20px; border: none; border-radius: 12px;
+    font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 800;
+    cursor: pointer; transition: all 0.15s;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+  }
+  .btn:active { transform: translateY(2px); box-shadow: none; }
+  .btn-check { background: var(--forest-bright); color: var(--white); }
+  .btn-check:hover { background: var(--forest-light); }
+  .btn-hint { background: var(--gold); color: var(--forest-dark); }
+  .btn-hint:hover { background: var(--amber); }
+  .btn-next { background: var(--blue); color: var(--white); display:none; }
+  .btn-next:hover { background: #2c6fad; }
+  .btn-back { background: var(--cream); color: var(--forest-dark); border: 2px solid var(--bark-light); }
+  .btn-back:hover { background: #e0d9c0; }
+
+  /* Feedback */
+  .feedback {
+    margin-top: 14px; padding: 12px 16px; border-radius: 12px;
+    font-weight: 700; font-size: 1rem; display: none; line-height: 1.5;
+  }
+  .feedback.correct { background: #e8f5e9; border: 2px solid var(--forest-bright); color: var(--forest-dark); }
+  .feedback.wrong { background: #ffebee; border: 2px solid var(--red); color: #b71c1c; }
+
+  /* Hint box */
+  .hint-box {
+    margin-top: 12px; padding: 12px 16px; border-radius: 12px;
+    background: #fffde7; border: 2px dashed var(--gold);
+    color: var(--forest-dark); font-size: 0.95rem; display: none; line-height: 1.6;
+  }
+  .hint-box strong { color: var(--forest-light); }
+
+  /* Level complete */
+  .level-complete {
+    text-align: center; padding: 30px 20px; display: none;
+  }
+  .level-complete .big-emoji { font-size: 4rem; animation: bounce 0.6s ease infinite alternate; }
+  @keyframes bounce { from{transform:scale(1)} to{transform:scale(1.1)} }
+  .level-complete h2 { font-family: 'Fredoka One', cursive; font-size: 2rem; color: var(--forest-dark); margin: 10px 0; }
+  .level-complete p { font-size: 1.05rem; color: var(--text-light); margin-bottom: 20px; }
+
+  /* Stars display */
+  .stars-display { font-size: 2.5rem; letter-spacing: 6px; margin: 8px 0; }
+
+  /* Responsive */
+  @media (max-width: 500px) {
+    .header h1 { font-size: 2rem; }
+    .level-map { grid-template-columns: repeat(2, 1fr); }
+    .choices { grid-template-columns: 1fr; }
+    canvas.graph { width: 300px !important; height: 300px !important; }
+  }
+
+  /* Equation rendering */
+  .eq { font-family: 'Times New Roman', serif; font-style: italic; }
+  .eq sub { font-size: 0.75em; }
+  sup { font-size: 0.75em; vertical-align: super; }
+
+  /* Points on graph explanation */
+  .graph-legend { display: flex; gap: 14px; flex-wrap: wrap; margin: 8px 0 4px; justify-content: center; font-size: 0.9rem; font-weight: 700; }
+  .leg-item { display: flex; align-items: center; gap: 5px; }
+  .leg-color { width: 24px; height: 4px; border-radius: 2px; }
+
+  /* ===================== WELCOME SCREEN ===================== */
+  .welcome-screen {
+    background: rgba(249,245,231,0.97);
+    border: 3px solid var(--bark-light);
+    border-radius: 20px; padding: 36px 28px;
+    box-shadow: 0 8px 0 var(--bark), 0 12px 30px var(--shadow);
+    margin-top: 10px; text-align: center;
+  }
+  .welcome-screen h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2rem; color: var(--forest-dark); margin-bottom: 10px;
+  }
+  .welcome-intro {
+    color: var(--forest-dark); font-size: 1rem; line-height: 1.7;
+    margin-bottom: 20px; text-align: left;
+    background: #f0f7ee; border-radius: 12px; padding: 14px 18px;
+    border-left: 4px solid var(--forest-bright);
+  }
+  .welcome-intro ul { padding-left: 20px; margin-top: 8px; }
+  .welcome-intro li { margin-bottom: 4px; }
+  .name-input-wrap { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 20px 0 10px; flex-wrap: wrap; }
+  .name-label { font-size: 1.1rem; font-weight: 800; color: var(--forest-dark); }
+  .name-input {
+    border: 2.5px solid var(--bark-light); border-radius: 10px;
+    padding: 10px 16px; font-size: 1.1rem; font-family: 'Nunito', sans-serif;
+    font-weight: 700; color: var(--forest-dark); background: var(--white);
+    width: 200px; outline: none; transition: border 0.2s;
+  }
+  .name-input:focus { border-color: var(--forest-bright); }
+  .welcome-animals { font-size: 2rem; letter-spacing: 6px; margin: 14px 0 6px; }
+  .btn-start {
+    background: var(--forest-bright); color: var(--white);
+    font-size: 1.2rem; padding: 14px 36px; border-radius: 14px;
+    border: none; cursor: pointer; font-family: 'Fredoka One', cursive;
+    box-shadow: 0 5px 0 var(--forest-dark); transition: all 0.15s;
+    margin-top: 10px; letter-spacing: 0.5px;
+  }
+  .btn-start:hover { background: var(--forest-light); transform: translateY(-2px); box-shadow: 0 7px 0 var(--forest-dark); }
+  .btn-start:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--forest-dark); }
+  .name-error { color: var(--red); font-weight: 700; font-size: 0.9rem; margin-top: 6px; display: none; }
+
+  /* ===================== FINAL SCREEN ===================== */
+  .final-screen {
+    background: rgba(249,245,231,0.97);
+    border: 3px solid var(--gold);
+    border-radius: 20px; padding: 36px 28px;
+    box-shadow: 0 8px 0 var(--bark), 0 12px 30px var(--shadow);
+    margin-top: 10px; text-align: center; display: none;
+  }
+  .final-screen h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.2rem; color: var(--forest-dark); margin: 12px 0 6px;
+  }
+  .final-name { color: var(--forest-bright); }
+  .final-trophy { font-size: 4.5rem; animation: bounce 0.7s ease infinite alternate; display: block; }
+  .final-stars-row { font-size: 2.2rem; letter-spacing: 8px; margin: 10px 0; }
+  .summary-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    margin: 20px 0; text-align: center;
+  }
+  .summary-card {
+    background: #f0f7ee; border-radius: 14px; padding: 14px 8px;
+    border: 2px solid var(--forest-bright);
+  }
+  .summary-card .sc-num {
+    font-family: 'Fredoka One', cursive; font-size: 2rem; color: var(--forest-dark);
+  }
+  .summary-card .sc-label {
+    font-size: 0.8rem; font-weight: 700; color: var(--text-light); margin-top: 2px;
+  }
+  .level-summary-list { text-align: left; margin: 16px 0; }
+  .lsl-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; border-radius: 10px; margin-bottom: 6px;
+    background: #f9f5e7; border: 1.5px solid var(--bark-light);
+  }
+  .lsl-name { font-weight: 700; font-size: 0.95rem; color: var(--forest-dark); }
+  .lsl-result { font-size: 0.9rem; }
+  .final-msg { font-size: 1.05rem; color: var(--text-light); margin: 14px 0; font-weight: 600; }
+  .btn-play-again {
+    background: var(--gold); color: var(--forest-dark);
+    font-size: 1.1rem; padding: 12px 30px; border-radius: 14px;
+    border: none; cursor: pointer; font-family: 'Fredoka One', cursive;
+    box-shadow: 0 4px 0 var(--bark); transition: all 0.15s; margin: 6px;
+  }
+  .btn-play-again:hover { background: var(--amber); transform: translateY(-2px); }
+  @media (max-width: 500px) {
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- FOREST BACKGROUND -->
+<div class="forest-bg">
+  <div class="sun"></div>
+  <div class="cloud cloud1"></div>
+  <div class="cloud cloud2"></div>
+  <div class="bird bird1">🐦</div>
+  <div class="bird bird2">🐦</div>
+  <div class="deer">🦌</div>
+  <!-- Trees SVG -->
+  <svg style="position:absolute;bottom:0;left:0;width:100%;height:45%" viewBox="0 0 1200 300" preserveAspectRatio="xMinYMax meet" xmlns="http://www.w3.org/2000/svg">
+    <!-- Big trees -->
+    <g><polygon points="60,280 90,120 120,280" fill="#2d5a27"/><polygon points="70,240 95,100 120,240" fill="#4a8c3f"/><rect x="88" y="260" width="8" height="25" fill="#5d4037"/></g>
+    <g><polygon points="160,280 200,80 240,280" fill="#1a3a1a"/><polygon points="170,230 200,60 230,230" fill="#2d5a27"/><rect x="194" y="255" width="10" height="30" fill="#5d4037"/></g>
+    <g><polygon points="290,280 320,110 350,280" fill="#2d5a27"/><polygon points="300,250 322,95 344,250" fill="#4a8c3f"/><rect x="317" y="260" width="8" height="25" fill="#5d4037"/></g>
+    <g><polygon points="420,280 460,70 500,280" fill="#1a3a1a"/><polygon points="430,240 460,50 490,240" fill="#2d5a27"/><rect x="454" y="255" width="10" height="30" fill="#5d4037"/></g>
+    <g><polygon points="540,280 575,100 610,280" fill="#2d5a27"/><polygon points="550,248 575,85 600,248" fill="#4a8c3f"/><rect x="570" y="258" width="9" height="28" fill="#5d4037"/></g>
+    <g><polygon points="660,280 700,75 740,280" fill="#1a3a1a"/><polygon points="672,240 700,55 728,240" fill="#2d5a27"/><rect x="694" y="255" width="10" height="30" fill="#5d4037"/></g>
+    <g><polygon points="790,280 820,115 850,280" fill="#2d5a27"/><polygon points="800,248 822,98 844,248" fill="#4a8c3f"/><rect x="816" y="258" width="9" height="28" fill="#5d4037"/></g>
+    <g><polygon points="900,280 940,80 980,280" fill="#1a3a1a"/><polygon points="912,235 940,58 968,235" fill="#2d5a27"/><rect x="934" y="252" width="10" height="32" fill="#5d4037"/></g>
+    <g><polygon points="1040,280 1075,105 1110,280" fill="#2d5a27"/><polygon points="1050,248 1076,88 1102,248" fill="#4a8c3f"/><rect x="1070" y="258" width="9" height="28" fill="#5d4037"/></g>
+    <g><polygon points="1140,280 1175,115 1210,280" fill="#1a3a1a"/><polygon points="1152,245 1176,95 1200,245" fill="#2d5a27"/><rect x="1170" y="258" width="9" height="28" fill="#5d4037"/></g>
+    <!-- Ground -->
+    <rect x="0" y="275" width="1200" height="30" fill="#2d5a27" rx="0"/>
+    <!-- Mushrooms -->
+    <g><ellipse cx="350" cy="275" rx="14" ry="7" fill="#e74c3c"/><rect x="347" y="275" width="6" height="8" fill="#f5e6c8"/><circle cx="346" cy="272" r="2" fill="#fff" opacity="0.7"/><circle cx="352" cy="270" r="1.5" fill="#fff" opacity="0.7"/></g>
+    <g><ellipse cx="780" cy="275" rx="11" ry="6" fill="#e67e22"/><rect x="777" y="275" width="5" height="7" fill="#f5e6c8"/><circle cx="776" cy="272" r="1.5" fill="#fff" opacity="0.7"/></g>
+    <!-- Small flowers -->
+    <g><circle cx="130" cy="276" r="4" fill="#f9ca24"/><circle cx="126" cy="274" r="2" fill="#a8e063"/><circle cx="134" cy="274" r="2" fill="#a8e063"/></g>
+    <g><circle cx="490" cy="276" r="4" fill="#ff9ff3"/><circle cx="486" cy="274" r="2" fill="#a8e063"/><circle cx="494" cy="274" r="2" fill="#a8e063"/></g>
+  </svg>
+  <!-- Fireflies -->
+  <div class="firefly" style="left:20%;top:55%;animation-delay:0s"></div>
+  <div class="firefly" style="left:70%;top:60%;animation-delay:1.5s"></div>
+  <div class="firefly" style="left:45%;top:52%;animation-delay:0.7s"></div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="wrapper">
+  <div class="header">
+    <h1>🌲 Skovmatematik 🌲</h1>
+    <p>Træn lineære funktioner i skoven!</p>
+  </div>
+
+
+  <!-- WELCOME SCREEN -->
+  <div class="welcome-screen" id="welcomeScreen">
+    <div class="welcome-animals">🦌 🌲 🦊 🌿 🐦</div>
+    <h2>Velkommen til Skovmatematik!</h2>
+    <div class="welcome-intro">
+      <strong>Om spillet:</strong> Træn lineære funktioner i 6 levels med stigende sværhedsgrad.
+      <ul>
+        <li>📊 <strong>Level 1:</strong> Match en funktion til den rigtige graf</li>
+        <li>🔍 <strong>Level 2:</strong> Aflæs forskriften fra en graf</li>
+        <li>🦊 <strong>Level 3:</strong> Opstil en forskrift fra en skovkontekst</li>
+        <li>📍 <strong>Level 4:</strong> Find forskriften ud fra 2 punkter</li>
+        <li>⚖️ <strong>Level 5:</strong> Løs ligninger med x på begge sider</li>
+        <li>🏆 <strong>Level 6:</strong> Blandet udfordring – alt på én gang!</li>
+      </ul>
+      <br>Du skal svare rigtigt på mindst <strong>2 ud af 3 spørgsmål</strong> for at låse næste level op. Brug 💡 hint-knappen, hvis du sidder fast!
+    </div>
+    <div class="name-input-wrap">
+      <span class="name-label">Dit navn:</span>
+      <input type="text" class="name-input" id="playerNameInput" placeholder="Skriv dit navn..." maxlength="30" autocomplete="off" />
+    </div>
+    <div class="name-error" id="nameError">Skriv venligst dit navn for at starte 🌿</div>
+    <br>
+    <button class="btn-start" onclick="startGame()">🌲 Start eventyret! 🌲</button>
+  </div>
+
+  <!-- LEVEL MAP -->
+  <div class="level-map" id="levelMap" style="display:none">
+    <div class="level-btn" id="lbtn1" onclick="startLevel(1)">
+      <div class="level-icon">📊</div>
+      <div class="level-num">Level 1</div>
+      <div class="level-title">Vælg den rigtige graf</div>
+      <div class="stars" id="stars1">⭐⭐⭐</div>
+    </div>
+    <div class="level-btn locked" id="lbtn2" onclick="startLevel(2)">
+      <div class="level-icon">🔍</div>
+      <div class="level-num">Level 2</div>
+      <div class="level-title">Aflæs forskriften</div>
+      <div class="stars" id="stars2">☆☆☆</div>
+      <span class="lock-icon">🔒</span>
+    </div>
+    <div class="level-btn locked" id="lbtn3" onclick="startLevel(3)">
+      <div class="level-icon">🦊</div>
+      <div class="level-num">Level 3</div>
+      <div class="level-title">Opstil fra kontekst</div>
+      <div class="stars" id="stars3">☆☆☆</div>
+      <span class="lock-icon">🔒</span>
+    </div>
+    <div class="level-btn locked" id="lbtn4" onclick="startLevel(4)">
+      <div class="level-icon">📍</div>
+      <div class="level-num">Level 4</div>
+      <div class="level-title">Forskrift fra 2 punkter</div>
+      <div class="stars" id="stars4">☆☆☆</div>
+      <span class="lock-icon">🔒</span>
+    </div>
+    <div class="level-btn locked" id="lbtn5" onclick="startLevel(5)">
+      <div class="level-icon">⚖️</div>
+      <div class="level-num">Level 5</div>
+      <div class="level-title">Løs ligninger</div>
+      <div class="stars" id="stars5">☆☆☆</div>
+      <span class="lock-icon">🔒</span>
+    </div>
+    <div class="level-btn locked" id="lbtn6" onclick="startLevel(6)">
+      <div class="level-icon">🏆</div>
+      <div class="level-num">Level 6</div>
+      <div class="level-title">Blandet udfordring</div>
+      <div class="stars" id="stars6">☆☆☆</div>
+      <span class="lock-icon">🔒</span>
+    </div>
+  </div>
+
+  <!-- GAME PANEL -->
+  <div class="game-panel" id="gamePanel" style="display:none">
+    <!-- Question area -->
+    <div id="questionArea">
+      <div class="panel-header">
+        <div class="panel-title" id="panelTitle">Level 1</div>
+        <div class="progress-dots" id="progressDots">
+          <div class="dot current" id="dot0"></div>
+          <div class="dot" id="dot1"></div>
+          <div class="dot" id="dot2"></div>
+        </div>
+      </div>
+      <div class="question-box" id="questionBox"></div>
+      <div class="btn-row-main">
+        <div class="btn-group-left">
+          <button class="btn btn-hint" onclick="toggleHint()">💡 Hint</button>
+          <button class="btn btn-back" onclick="backToMap()">← Kort</button>
+        </div>
+        <div class="btn-group-right">
+          <button class="btn btn-check" id="btnCheck" onclick="checkAnswer()">Tjek svar ✓</button>
+          <button class="btn btn-next" id="btnNext" onclick="nextQuestion()">Videre ➜</button>
+        </div>
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <div class="hint-box" id="hintBox"></div>
+    </div>
+
+    <!-- Level complete -->
+    <div class="level-complete" id="levelComplete">
+      <div class="big-emoji" id="completeEmoji">🎉</div>
+      <h2 id="completeTitle">Level gennemført!</h2>
+      <div class="stars-display" id="completeStars"></div>
+      <p id="completeMsg"></p>
+      <div class="btn-row" style="justify-content:center">
+        <button class="btn btn-check" id="btnNextLevel" onclick="nextLevel()">Næste level ➜</button>
+        <button class="btn btn-hint" onclick="retryLevel()">↩ Prøv igen</button>
+        <button class="btn btn-back" onclick="backToMap()">← Kort</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FINAL SCREEN -->
+  <div class="final-screen" id="finalScreen">
+    <span class="final-trophy">🏆</span>
+    <h2>Tillykke, <span class="final-name" id="finalName"></span>!</h2>
+    <p class="final-msg" id="finalMsg"></p>
+    <div class="final-stars-row" id="finalStarsRow"></div>
+    <div class="summary-grid" id="summaryGrid"></div>
+    <div class="level-summary-list" id="levelSummaryList"></div>
+    <div style="margin-top:20px">
+      <button class="btn-play-again" onclick="playAgain()">🌱 Spil igen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== GAME STATE =====================
+const state = {
+  currentLevel: 0,
+  currentQ: 0,
+  results: [null, null, null],
+  levelUnlocked: [true, false, false, false, false, false],
+  levelStars: [0,0,0,0,0,0],
+  levelCorrect: [0,0,0,0,0,0],
+  levelTotal: [0,0,0,0,0,0],
+  answered: false,
+  currentData: null,
+  levelQs: [],
+  playerName: '',
+};
+
+// ===================== WELCOME / START =====================
+function startGame() {
+  const input = document.getElementById('playerNameInput');
+  const name = input.value.trim();
+  if (!name) {
+    document.getElementById('nameError').style.display = 'block';
+    input.focus();
+    return;
+  }
+  document.getElementById('nameError').style.display = 'none';
+  state.playerName = name;
+  document.getElementById('welcomeScreen').style.display = 'none';
+  document.getElementById('levelMap').style.display = 'grid';
+  updateLevelMap();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('playerNameInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') startGame();
+  });
+});
+
+function playAgain() {
+  // Reset state
+  state.currentLevel = 0;
+  state.currentQ = 0;
+  state.results = [];
+  state.levelUnlocked = [true, false, false, false, false, false];
+  state.levelStars = [0,0,0,0,0,0];
+  state.levelCorrect = [0,0,0,0,0,0];
+  state.levelTotal = [0,0,0,0,0,0];
+  state.answered = false;
+  state.currentData = null;
+  state.levelQs = [];
+  state.playerName = '';
+  document.getElementById('finalScreen').style.display = 'none';
+  document.getElementById('playerNameInput').value = '';
+  document.getElementById('welcomeScreen').style.display = 'block';
+}
+
+// ===================== QUESTION GENERATORS =====================
+
+// Helper: shuffle array
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function rnd(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+function rndInt(lo, hi) { return Math.floor(Math.random()*(hi-lo+1))+lo; }
+
+// -------- LEVEL 1: Match graph to formula --------
+function genLevel1() {
+  // Each set: 2 lines share one b-value, 2 lines share a different b-value.
+  // b-pairs vary across sets so students practice reading both a and b.
+  const sets = [
+    () => {
+      const lines = [{a:1,b:3},{a:2,b:3},{a:1,b:-2},{a:2,b:-2}];
+      const ci = rndInt(0,3);
+      return {lines, ci};
+    },
+    () => {
+      const lines = [{a:2,b:-1},{a:-1,b:-1},{a:2,b:4},{a:-1,b:4}];
+      const ci = rndInt(0,3);
+      return {lines, ci};
+    },
+    () => {
+      const lines = [{a:1,b:2},{a:-2,b:2},{a:1,b:-3},{a:-2,b:-3}];
+      const ci = rndInt(0,3);
+      return {lines, ci};
+    },
+    () => {
+      const lines = [{a:0.5,b:1},{a:3,b:1},{a:0.5,b:-4},{a:3,b:-4}];
+      const ci = rndInt(0,3);
+      return {lines, ci};
+    },
+    () => {
+      const lines = [{a:2,b:4},{a:-1,b:4},{a:2,b:-1},{a:-1,b:-1}];
+      const ci = rndInt(0,3);
+      return {lines, ci};
+    },
+    () => {
+      const lines = [{a:-2,b:3},{a:1,b:3},{a:-2,b:-2},{a:1,b:-2}];
+      const ci = rndInt(0,3);
+      return {lines, ci};
+    },
+  ];
+  return shuffle(sets).slice(0,3).map(fn => {
+    const {lines, ci} = fn();
+    const correct = ['A','B','C','D'][ci];
+    const {a,b} = lines[ci];
+    const fstr = formatFormula(a,b);
+    return {type:'level1', lines, correctIdx:ci, correct, fstr};
+  });
+}
+
+function formatFormula(a, b, varname='x') {
+  let s = '';
+  if (a === 0) { s = ''; }
+  else if (a === 1) { s = varname; }
+  else if (a === -1) { s = '-' + varname; }
+  else if (Number.isInteger(a) || (a*2===Math.round(a*2) && a*3===Math.round(a*3))) {
+    const fr = toFrac(a);
+    s = fr + varname;
+  } else { s = a + varname; }
+
+  if (b === 0 && a !== 0) return s || '0';
+  if (a === 0) return b.toString();
+  if (b > 0) return s + ' + ' + b;
+  if (b < 0) return s + ' − ' + Math.abs(b);
+  return s;
+}
+
+function toFrac(x) {
+  if (Number.isInteger(x)) return x.toString();
+  // try halves, thirds
+  const fracs = [[1,2],[1,3],[2,3],[1,4],[3,4]];
+  for (const [n,d] of fracs) {
+    if (Math.abs(x - n/d) < 0.001) return n+'/'+d;
+    if (Math.abs(x + n/d) < 0.001) return '-'+n+'/'+d;
+  }
+  return x.toString();
+}
+
+// -------- LEVEL 2: Read formula from graph --------
+function genLevel2() {
+  const configs = [
+    {a:2, b:1}, {a:-1, b:3}, {a:0.5, b:-2}, {a:3, b:0},
+    {a:-2, b:-1}, {a:1, b:4}, {a:-0.5, b:2}, {a:2, b:-3},
+    {a:1, b:-1}, {a:-1, b:0}, {a:0.5, b:1}, {a:-3, b:2},
+  ];
+  return shuffle(configs).slice(0,3).map(({a,b}) => ({
+    type:'level2', a, b,
+    formula: formatFormula(a,b),
+    acceptDecimal: !Number.isInteger(a),
+  }));
+}
+
+// -------- LEVEL 3: Context problems (forest theme) --------
+function genLevel3() {
+  const templates = [
+    () => {
+      const start = rnd([80,100,120,150,200]);
+      const rate = rnd([5,8,10,12,15]);
+      return {
+        text: `En skovfyr er ${start} cm høj, når den plantes, og vokser ${rate} cm hvert år. Opstil en forskrift for træets højde f(x) x år efter plantning.`,
+        a: rate, b: start,
+        formula: formatFormula(rate, start),
+      };
+    },
+    () => {
+      const start = rnd([200,300,400,500]);
+      const rate = rnd([10,15,20,25]);
+      return {
+        text: `En bøg starter med ${start} blade, men mister ${rate} blade om dagen i efteråret. Opstil en forskrift for antallet af blade f(x) x dage efter efterårets start.`,
+        a: -rate, b: start,
+        formula: formatFormula(-rate, start),
+      };
+    },
+    () => {
+      const start = rnd([15,20,25,30]);
+      const rate = rnd([2,3,4,5]);
+      return {
+        text: `Et rådyr vejer ${start} kg ved fødslen og tager ${rate} kg på hvert år. Opstil en forskrift for dyrets vægt f(x) x år efter fødslen.`,
+        a: rate, b: start,
+        formula: formatFormula(rate, start),
+      };
+    },
+    () => {
+      const start = rnd([50,60,80,100]);
+      const rate = rnd([3,4,5,6]);
+      return {
+        text: `En pindsvin-bestand i skoven tæller ${start} dyr og vokser med ${rate} dyr om måneden. Opstil en forskrift for bestanden f(x) x måneder efter optællingen.`,
+        a: rate, b: start,
+        formula: formatFormula(rate, start),
+      };
+    },
+    () => {
+      const start = rnd([10,12,15,18]);
+      const rate = rnd([2,3,4]);
+      return {
+        text: `En ræveunge er ${start} cm lang ved fødslen og vokser ${rate} cm om måneden. Opstil en forskrift for ræveungens længde f(x) x måneder efter fødslen.`,
+        a: rate, b: start,
+        formula: formatFormula(rate, start),
+      };
+    },
+    () => {
+      const start = rnd([1000,1200,1500,2000]);
+      const rate = rnd([50,80,100,120]);
+      return {
+        text: `En skov indeholder ${start} liter regnvand i en sø. Vand fordamper med ${rate} liter om ugen. Opstil en forskrift for vandmængden f(x) x uger efter målingen (anta ingen regn).`,
+        a: -rate, b: start,
+        formula: formatFormula(-rate, start),
+      };
+    },
+    () => {
+      const start = rnd([5,8,10,12]);
+      const rate = rnd([1,2,3]);
+      return {
+        text: `En dæmning i skoven er ${start} meter høj. Bæverne bygger ${rate} meter til hvert år. Opstil en forskrift for dæmningens højde f(x) x år efter første måling.`,
+        a: rate, b: start,
+        formula: formatFormula(rate, start),
+      };
+    },
+    () => {
+      const start = rnd([200,250,300,400]);
+      const rate = rnd([5,8,10]);
+      return {
+        text: `En hjord af kronhjorte tæller ${start} dyr i år og mindskes med ${rate} dyr om året. Opstil en forskrift for hjordens størrelse f(x) x år fremover.`,
+        a: -rate, b: start,
+        formula: formatFormula(-rate, start),
+      };
+    },
+  ];
+  return shuffle(templates).slice(0,3).map(fn => ({type:'level3', ...fn()}));
+}
+
+// -------- LEVEL 4: Formula from 2 points --------
+function genLevel4() {
+  const configs = [
+    {x1:1,y1:3,x2:3,y2:7},{x1:0,y1:2,x2:4,y2:10},{x1:2,y1:1,x2:5,y2:7},
+    {x1:1,y1:5,x2:3,y2:1},{x1:0,y1:-1,x2:3,y2:5},{x1:2,y1:4,x2:6,y2:8},
+    {x1:1,y1:-2,x2:4,y2:4},{x1:0,y1:3,x2:2,y2:-1},{x1:3,y1:2,x2:6,y2:5},
+    {x1:1,y1:6,x2:4,y2:3},{x1:0,y1:4,x2:5,y2:-1},{x1:2,y1:0,x2:5,y2:6},
+  ];
+  return shuffle(configs).slice(0,3).map(({x1,y1,x2,y2}) => {
+    const a = (y2-y1)/(x2-x1);
+    const b = y1 - a*x1;
+    return {type:'level4', x1,y1,x2,y2, a, b, formula: formatFormula(a,b)};
+  });
+}
+
+// -------- LEVEL 5: Solve equations ax+b=cx+d --------
+function genLevel5() {
+  // Generate ax+b=cx+d where x is integer, all coeffs reasonable
+  function makeEq() {
+    let x, a, b, c, d;
+    for (let tries=0; tries<100; tries++) {
+      a = rndInt(1,6);
+      c = rndInt(1,6);
+      if (a===c) continue;
+      x = rndInt(-5,5);
+      b = rndInt(-8,8);
+      d = a*x+b - c*x;
+      if (Math.abs(d)>12) continue;
+      return {a,b,c,d,x};
+    }
+    return {a:3,b:2,c:1,d:8,x:3};
+  }
+  const used = [];
+  return Array.from({length:3}, ()=>{
+    let eq;
+    do { eq = makeEq(); } while (used.some(u=>u.x===eq.x&&u.a===eq.a));
+    used.push(eq);
+    const {a,b,c,d,x} = eq;
+    const lhs = termStr(a,'x') + signStr(b);
+    const rhs = termStr(c,'x') + signStr(d);
+    return {type:'level5', lhs, rhs, x, equStr: lhs + ' = ' + rhs};
+  });
+}
+function termStr(a, v) {
+  if (a===1) return v;
+  if (a===-1) return '-'+v;
+  return a+v;
+}
+function signStr(n) {
+  if (n===0) return '';
+  if (n>0) return ' + '+n;
+  return ' − '+Math.abs(n);
+}
+
+// -------- LEVEL 6: Mixed (5 questions) --------
+function genLevel6() {
+  const l1 = genLevel1()[0];
+  const l2 = genLevel2()[0];
+  const l3 = genLevel3()[0];
+  const l4 = genLevel4()[0];
+  const l5 = genLevel5()[0];
+  return shuffle([l1,l2,l3,l4,l5]);
+}
+
+// ===================== RENDER QUESTION =====================
+function renderQuestion(qdata) {
+  const box = document.getElementById('questionBox');
+  box.innerHTML = '';
+  state.answered = false;
+  document.getElementById('feedback').style.display='none';
+  document.getElementById('hintBox').style.display='none';
+  document.getElementById('btnNext').style.display='none';
+  document.getElementById('btnCheck').style.display='inline-block';
+
+  // Update dots
+  const nq = state.levelQs.length;
+  let dotHTML = '';
+  for (let i=0; i<nq; i++) {
+    const r = state.results[i];
+    let cls = 'dot';
+    if (i === state.currentQ) cls += ' current';
+    else if (r === true) cls += ' correct';
+    else if (r === false) cls += ' wrong';
+    dotHTML += `<div class="${cls}" id="dot${i}"></div>`;
+  }
+  document.getElementById('progressDots').innerHTML = dotHTML;
+
+  if (qdata.type==='level1') renderL1(box, qdata);
+  else if (qdata.type==='level2') renderL2(box, qdata);
+  else if (qdata.type==='level3') renderL3(box, qdata);
+  else if (qdata.type==='level4') renderL4(box, qdata);
+  else if (qdata.type==='level5') renderL5(box, qdata);
+}
+
+// ---- Level 1 render ----
+const GRAPH_COLORS = ['#e74c3c','#2980b9','#27ae60','#8e44ad'];
+function renderL1(box, q) {
+  const labels = ['A','B','C','D'];
+  box.innerHTML = `
+    <div class="context-badge">📊 Match grafen</div>
+    <div class="question-text">Hvilken af graferne (A, B, C eller D) passer til funktionen:<br>
+      <span style="font-size:1.2rem;font-family:'Times New Roman',serif">f(x) = ${q.fstr}</span>?
+    </div>
+    <div class="graph-legend" id="graphLegend"></div>
+    <div class="canvas-wrap"><canvas class="graph" id="graphCanvas" width="360" height="320"></canvas></div>
+    <div class="choices" id="choices"></div>
+  `;
+  // legend
+  const leg = document.getElementById('graphLegend');
+  labels.forEach((l,i)=>{
+    leg.innerHTML += `<div class="leg-item"><div class="leg-color" style="background:${GRAPH_COLORS[i]}"></div>${l}</div>`;
+  });
+  // draw
+  drawMultiGraph('graphCanvas', q.lines, GRAPH_COLORS, labels);
+  // choices
+  const ch = document.getElementById('choices');
+  labels.forEach(l=>{
+    const btn = document.createElement('button');
+    btn.className='choice-btn'; btn.textContent=l;
+    btn.onclick=()=>{ if(state.answered)return; selectChoice(l, q.correct, q); };
+    ch.appendChild(btn);
+  });
+  q._inputType='choice';
+}
+
+function drawMultiGraph(id, lines, colors, labels) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const pad=40;
+  const gW=W-2*pad, gH=H-2*pad;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+
+  const xMin=-5,xMax=5,yMin=-7,yMax=7;
+  function tx(x){return pad+(x-xMin)/(xMax-xMin)*gW;}
+  function ty(y){return H-pad-(y-yMin)/(yMax-yMin)*gH;}
+
+  // Grid
+  ctx.strokeStyle='#e0e0e0'; ctx.lineWidth=1;
+  for(let x=xMin;x<=xMax;x++){ctx.beginPath();ctx.moveTo(tx(x),pad);ctx.lineTo(tx(x),H-pad);ctx.stroke();}
+  for(let y=yMin;y<=yMax;y++){ctx.beginPath();ctx.moveTo(pad,ty(y));ctx.lineTo(W-pad,ty(y));ctx.stroke();}
+
+  // Axes
+  ctx.strokeStyle='#333'; ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(pad,ty(0));ctx.lineTo(W-pad,ty(0));ctx.stroke();
+  ctx.beginPath();ctx.moveTo(tx(0),pad);ctx.lineTo(tx(0),H-pad);ctx.stroke();
+
+  // Axis labels
+  ctx.fillStyle='#555'; ctx.font='11px Nunito'; ctx.textAlign='center';
+  for(let x=-4;x<=4;x+=2){if(x!==0){ctx.fillText(x,tx(x),ty(0)+14);}}
+  ctx.textAlign='right';
+  for(let y=-6;y<=6;y+=2){if(y!==0){ctx.fillText(y,tx(0)-4,ty(y)+4);}}
+  ctx.fillStyle='#333'; ctx.font='bold 12px Nunito';
+  ctx.textAlign='center'; ctx.fillText('x',W-14,ty(0)+5);
+  ctx.textAlign='left'; ctx.fillText('y',tx(0)+4,16);
+
+  // Lines + labels
+  lines.forEach(({a,b},i)=>{
+    ctx.strokeStyle=colors[i]; ctx.lineWidth=2.5;
+    ctx.beginPath();
+    const x0=xMin, y0=a*x0+b;
+    const x1=xMax, y1=a*x1+b;
+    ctx.moveTo(tx(x0),ty(y0));
+    ctx.lineTo(tx(x1),ty(y1));
+    ctx.stroke();
+
+    // Find a label position that is clearly inside the visible plot area.
+    // Try x-positions from right to left and pick the first where y is comfortably inside.
+    const margin = 0.7; // units inside the border
+    const xTry = [xMax-margin, xMax-1.5, xMax-2.5, 0, xMin+margin, xMin+1.5];
+    let lx = 0, ly = a*0+b;
+    for (const xt of xTry) {
+      const yt = a*xt+b;
+      if (yt >= yMin+margin && yt <= yMax-margin) { lx=xt; ly=yt; break; }
+    }
+    // If none worked cleanly, clamp y and use the x=0 position
+    ly = Math.max(yMin+margin, Math.min(yMax-margin, ly));
+
+    // Draw a small white pill behind the label so it reads on any line colour
+    ctx.font='bold 13px Nunito';
+    const lw = ctx.measureText(labels[i]).width;
+    const px=tx(lx)+5, py=ty(ly);
+    ctx.fillStyle='rgba(255,255,255,0.85)';
+    ctx.beginPath();
+    ctx.roundRect(px-3, py-12, lw+6, 16, 4);
+    ctx.fill();
+
+    ctx.fillStyle=colors[i]; ctx.textAlign='left';
+    ctx.fillText(labels[i], px, py);
+  });
+}
+
+// ---- Level 2 render ----
+function renderL2(box, q) {
+  box.innerHTML = `
+    <div class="context-badge">🔍 Aflæs grafen</div>
+    <div class="question-text">Aflæs forskriften for den lineære funktion vist i koordinatsystemet nedenfor.</div>
+    <div class="canvas-wrap"><canvas class="graph" id="graphCanvas" width="340" height="300"></canvas></div>
+    <div class="input-row" style="margin-top:14px">
+      <span class="input-label">f(x) =</span>
+      <input type="text" class="answer-input" id="answerInput" placeholder="fx: 2x+1" autocomplete="off" />
+    </div>
+    <div style="font-size:0.82rem;color:#777;margin-top:6px">Brøker kan skrives som fx 1/2 eller 0.5</div>
+  `;
+  drawSingleGraph('graphCanvas', q.a, q.b);
+  q._inputType='text';
+  document.getElementById('answerInput').addEventListener('keydown', e=>{ if(e.key==='Enter')checkAnswer(); });
+}
+
+function drawSingleGraph(id, a, b) {
+  const canvas = document.getElementById(id);
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  const pad=40;
+  const gW=W-2*pad,gH=H-2*pad;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  const xMin=-5,xMax=5,yMin=-7,yMax=7;
+  function tx(x){return pad+(x-xMin)/(xMax-xMin)*gW;}
+  function ty(y){return H-pad-(y-yMin)/(yMax-yMin)*gH;}
+  // Grid
+  ctx.strokeStyle='#e0e0e0';ctx.lineWidth=1;
+  for(let x=xMin;x<=xMax;x++){ctx.beginPath();ctx.moveTo(tx(x),pad);ctx.lineTo(tx(x),H-pad);ctx.stroke();}
+  for(let y=yMin;y<=yMax;y++){ctx.beginPath();ctx.moveTo(pad,ty(y));ctx.lineTo(W-pad,ty(y));ctx.stroke();}
+  // Axes
+  ctx.strokeStyle='#333';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(pad,ty(0));ctx.lineTo(W-pad,ty(0));ctx.stroke();
+  ctx.beginPath();ctx.moveTo(tx(0),pad);ctx.lineTo(tx(0),H-pad);ctx.stroke();
+  // Ticks & labels
+  ctx.fillStyle='#555';ctx.font='11px Nunito';ctx.textAlign='center';
+  for(let x=-4;x<=4;x+=2){if(x!==0){ctx.fillText(x,tx(x),ty(0)+14);}}
+  ctx.textAlign='right';
+  for(let y=-6;y<=6;y+=2){if(y!==0){ctx.fillText(y,tx(0)-4,ty(y)+4);}}
+  ctx.fillStyle='#333';ctx.font='bold 12px Nunito';
+  ctx.textAlign='center';ctx.fillText('x',W-14,ty(0)+5);
+  ctx.textAlign='left';ctx.fillText('y',tx(0)+4,16);
+  // The line
+  ctx.strokeStyle='#2980b9';ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(tx(xMin),ty(a*xMin+b));
+  ctx.lineTo(tx(xMax),ty(a*xMax+b));
+  ctx.stroke();
+
+}
+
+// ---- Level 3 render ----
+function renderL3(box, q) {
+  box.innerHTML = `
+    <div class="context-badge">🦊 Skovkontekst</div>
+    <div class="question-text">${q.text}</div>
+    <div class="input-row" style="margin-top:14px">
+      <span class="input-label">f(x) =</span>
+      <input type="text" class="answer-input" id="answerInput" placeholder="fx: 3x+15" autocomplete="off"/>
+    </div>
+    <div style="font-size:0.82rem;color:#777;margin-top:6px">Skriv fx: 3x+15 eller -10x+200</div>
+  `;
+  q._inputType='text';
+  document.getElementById('answerInput').addEventListener('keydown', e=>{ if(e.key==='Enter')checkAnswer(); });
+}
+
+// ---- Level 4 render ----
+function renderL4(box, q) {
+  box.innerHTML = `
+    <div class="context-badge">📍 To punkter</div>
+    <div class="question-text">
+      Bestem en forskrift for den lineære funktion, der går igennem punkterne:<br>
+      <span style="font-size:1.15rem;font-family:'Times New Roman',serif">
+        P<sub>1</sub>(${q.x1}, ${q.y1}) &nbsp;&nbsp; P<sub>2</sub>(${q.x2}, ${q.y2})
+      </span>
+    </div>
+    <div class="input-row" style="margin-top:14px">
+      <span class="input-label">f(x) =</span>
+      <input type="text" class="answer-input" id="answerInput" placeholder="fx: 2x+1" autocomplete="off"/>
+    </div>
+  `;
+  q._inputType='text';
+  document.getElementById('answerInput').addEventListener('keydown', e=>{ if(e.key==='Enter')checkAnswer(); });
+}
+
+// ---- Level 5 render ----
+function renderL5(box, q) {
+  box.innerHTML = `
+    <div class="context-badge">⚖️ Løs ligningen</div>
+    <div class="question-text">
+      Løs ligningen:<br>
+      <span style="font-size:1.3rem;font-family:'Times New Roman',serif">${q.equStr}</span>
+    </div>
+    <div class="input-row" style="margin-top:14px">
+      <span class="input-label">x =</span>
+      <input type="text" class="answer-input" id="answerInput" placeholder="fx: 3" autocomplete="off"/>
+    </div>
+  `;
+  q._inputType='text-x';
+  document.getElementById('answerInput').addEventListener('keydown', e=>{ if(e.key==='Enter')checkAnswer(); });
+}
+
+// ---- Choice selection ----
+function selectChoice(chosen, correct, q) {
+  q._chosen = chosen;
+}
+
+// ===================== CHECK ANSWER =====================
+function checkAnswer() {
+  if (state.answered) return;
+  const q = state.currentData;
+  let isCorrect = false;
+
+  if (q._inputType === 'choice') {
+    const chosen = q._chosen;
+    if (!chosen) { showFeedback(false, 'Vælg venligst A, B, C eller D.'); return; }
+    isCorrect = chosen === q.correct;
+    // Highlight choices
+    document.querySelectorAll('.choice-btn').forEach(btn=>{
+      if(btn.textContent===q.correct) btn.classList.add('selected-correct');
+      else if(btn.textContent===chosen&&!isCorrect) btn.classList.add('selected-wrong');
+      btn.disabled=true;
+    });
+  } else if (q._inputType === 'text') {
+    const raw = document.getElementById('answerInput').value.trim();
+    if (!raw) { showFeedback(false,'Skriv venligst et svar.'); return; }
+    isCorrect = checkFormulaAnswer(raw, q.a, q.b);
+    const inp = document.getElementById('answerInput');
+    inp.classList.add(isCorrect?'correct':'wrong');
+    inp.disabled=true;
+  } else if (q._inputType === 'text-x') {
+    const raw = document.getElementById('answerInput').value.trim().replace(',','.');
+    const num = parseFloat(raw);
+    isCorrect = Math.abs(num - q.x) < 0.01;
+    const inp = document.getElementById('answerInput');
+    inp.classList.add(isCorrect?'correct':'wrong');
+    inp.disabled=true;
+  }
+
+  state.answered = true;
+  state.results[state.currentQ] = isCorrect;
+  updateDots();
+
+  if (isCorrect) {
+    showFeedback(true, rnd(['🌲 Fremragende!','🦊 Perfekt!','🌿 Super klaret!','🍄 Godt arbejde!','🐦 Rigtigt!']) + ' Det er korrekt!');
+  } else {
+    let corr = '';
+    if (q.type==='level1') corr = `Svaret var ${q.correct}: f(x) = ${q.fstr}`;
+    else if (['level2','level3','level4'].includes(q.type)) corr = `Svaret er f(x) = ${q.formula}`;
+    else if (q.type==='level5') corr = `Svaret er x = ${q.x}`;
+    showFeedback(false, '🍂 Ikke helt rigtigt. ' + corr);
+  }
+
+  document.getElementById('btnNext').style.display='inline-block';
+  document.getElementById('btnCheck').style.display='none';
+}
+
+function checkFormulaAnswer(raw, a, b) {
+  // Normalize: replace comma with dot, spaces, ×, etc.
+  let s = raw.toLowerCase().replace(/\s+/g,'').replace(',','.').replace('−','-').replace('–','-');
+  // Remove f(x)= prefix if present
+  s = s.replace(/^f\(x\)=/,'');
+  // Try to parse a*x + b form
+  // Accept: ax+b, ax-b, bx alone (b=0), a (a=0)
+  // Also accept decimal or fraction for a
+
+  // Evaluate at two test x values
+  function evalStr(str, x) {
+    // Replace fractions like 1/2 -> 0.5
+    let e = str.replace(/(-?\d+)\/(\d+)/g, (m,n,d)=>(parseFloat(n)/parseFloat(d)));
+    // Replace x: digit/paren before x -> digit*(x), leading -x -> -1*(x), standalone x -> 1*(x)
+    e = e.replace(/(\d)x/g, `$1*(${x})`);
+    e = e.replace(/^-x/, `(-1*(${x}))`);
+    e = e.replace(/([+\-])x/g, `$1(${x})`);
+    e = e.replace(/^x$/, `(${x})`);
+    // catch any remaining bare x
+    e = e.replace(/x/g, `(${x})`);
+    try { return eval(e); } catch(ex) { return NaN; }
+  }
+  const x1=3, x2=-2;
+  const expected1 = a*x1+b, expected2 = a*x2+b;
+  const got1 = evalStr(s, x1), got2 = evalStr(s, x2);
+  if (isNaN(got1)||isNaN(got2)) return false;
+  return Math.abs(got1-expected1)<0.05 && Math.abs(got2-expected2)<0.05;
+}
+
+// ===================== HINT =====================
+const HINTS = {
+  level1: 'I en lineær funktion f(x) = ax + b er <strong>a hældningen</strong> og <strong>b er skæringen med y-aksen</strong>. Positive a-værdier giver stigende grafer, negative giver faldende. Jo større |a|, jo stejlere er grafen.',
+  level2: 'I en lineær funktion f(x) = ax + b er <strong>a hældningen</strong> og <strong>b er skæringen med y-aksen</strong>. Find b ved at se, hvor grafen skærer y-aksen. Find a ved at se, hvor mange enheder grafen stiger/falder, når x øges med 1.',
+  level3: 'I en lineær funktion f(x) = ax + b er <strong>a ændringen pr. enhed x</strong> og <strong>b er begyndelsesværdien</strong> (når x = 0). Skriv: hvad er der til at starte med? Det er b. Hvad sker der pr. enhed? Det er a.',
+  level4: '<strong>Formel for a:</strong> a = (y₂ − y₁) / (x₂ − x₁)<br><strong>Formel for b:</strong> b = y₁ − a·x₁<br>Sæt derefter ind i f(x) = ax + b.',
+  level5: 'Regneregler for ligninger: Du må gøre <strong>det samme på begge sider</strong> af lighedstegnet. Saml alle x-led på én side og tal på den anden. Isolér x til sidst ved at dividere.',
+};
+
+function getHintForQ(q) {
+  if (q.type) return HINTS[q.type] || '';
+  return '';
+}
+
+function toggleHint() {
+  const hb = document.getElementById('hintBox');
+  if (hb.style.display==='none'||hb.style.display==='') {
+    hb.innerHTML = '💡 <strong>Hint:</strong> ' + getHintForQ(state.currentData);
+    hb.style.display='block';
+  } else {
+    hb.style.display='none';
+  }
+}
+
+// ===================== FEEDBACK =====================
+function showFeedback(ok, msg) {
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback ' + (ok?'correct':'wrong');
+  fb.innerHTML = msg;
+  fb.style.display='block';
+}
+
+function updateDots() {
+  const nq = state.levelQs.length;
+  for (let i=0;i<nq;i++) {
+    const d = document.getElementById('dot'+i);
+    if (!d) continue;
+    d.className = 'dot';
+    if (i===state.currentQ) d.classList.add('current');
+    else if (state.results[i]===true) d.classList.add('correct');
+    else if (state.results[i]===false) d.classList.add('wrong');
+  }
+}
+
+// ===================== NAVIGATION =====================
+function nextQuestion() {
+  state.currentQ++;
+  if (state.currentQ >= state.levelQs.length) {
+    showLevelComplete();
+  } else {
+    state.currentData = state.levelQs[state.currentQ];
+    renderQuestion(state.currentData);
+  }
+}
+
+function showLevelComplete() {
+  document.getElementById('questionArea').style.display='none';
+  document.getElementById('levelComplete').style.display='block';
+
+  const nq = state.levelQs.length;
+  const correct = state.results.filter(r=>r===true).length;
+  const stars = correct === nq ? 3 : correct >= Math.ceil(nq*2/3) ? 2 : correct >= 1 ? 1 : 0;
+  const passed = correct >= 2 || (nq===5 && correct>=3);
+
+  state.levelStars[state.currentLevel-1] = Math.max(state.levelStars[state.currentLevel-1], stars);
+  // Track best correct for this level
+  if (correct > state.levelCorrect[state.currentLevel-1]) {
+    state.levelCorrect[state.currentLevel-1] = correct;
+    state.levelTotal[state.currentLevel-1] = nq;
+  } else if (state.levelTotal[state.currentLevel-1] === 0) {
+    state.levelTotal[state.currentLevel-1] = nq;
+  }
+
+  if (passed && state.currentLevel < 6) {
+    state.levelUnlocked[state.currentLevel] = true;
+  }
+
+  document.getElementById('completeEmoji').textContent = passed ? '🎉' : '🍂';
+  document.getElementById('completeTitle').textContent = passed ? 'Level gennemført!' : 'Næsten!';
+  document.getElementById('completeStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
+
+  const isLastLevel = state.currentLevel === 6;
+  document.getElementById('completeMsg').textContent = passed
+    ? `Du svarede rigtigt på ${correct} ud af ${nq} spørgsmål. ${!isLastLevel ? 'Næste level er nu låst op!' : 'Du har klaret alle levels!'}`
+    : `Du svarede rigtigt på ${correct} ud af ${nq}. Du skal have mindst 2 rigtige for at komme videre. Prøv igen!`;
+
+  const btnNL = document.getElementById('btnNextLevel');
+  if (isLastLevel && passed) {
+    btnNL.textContent = '🏆 Se resultat!';
+    btnNL.style.display='';
+    btnNL.onclick = showFinalScreen;
+  } else if (!passed || isLastLevel) {
+    btnNL.style.display='none';
+  } else {
+    btnNL.textContent = 'Næste level ➜';
+    btnNL.style.display='';
+    btnNL.onclick = nextLevel;
+  }
+
+  updateLevelMap();
+}
+
+function showFinalScreen() {
+  document.getElementById('gamePanel').style.display='none';
+  document.getElementById('levelMap').style.display='none';
+  document.getElementById('finalScreen').style.display='block';
+
+  const name = state.playerName;
+  document.getElementById('finalName').textContent = name;
+
+  const totalCorrect = state.levelCorrect.reduce((a,b)=>a+b, 0);
+  const totalQs = state.levelTotal.reduce((a,b)=>a+b, 0);
+  const totalStars = state.levelStars.reduce((a,b)=>a+b, 0);
+
+  const pct = totalQs > 0 ? Math.round(totalCorrect/totalQs*100) : 0;
+  let msg = '';
+  if (pct === 100) msg = `Utroligt, ${name}! Du fik alle rigtige – du er en sand skovmatematiker! 🌲🦊`;
+  else if (pct >= 80) msg = `Imponerende, ${name}! Du klarede dig fantastisk gennem skoven! 🌿`;
+  else if (pct >= 60) msg = `Godt klaret, ${name}! Du er godt på vej til at mestre lineære funktioner! 🐦`;
+  else msg = `Du har gennemført spillet, ${name}! Øv dig lidt mere, så bliver du endnu bedre! 🍄`;
+  document.getElementById('finalMsg').textContent = msg;
+
+  document.getElementById('finalStarsRow').textContent = '⭐'.repeat(totalStars) + '☆'.repeat(18-totalStars);
+
+  // Summary cards
+  document.getElementById('summaryGrid').innerHTML = `
+    <div class="summary-card">
+      <div class="sc-num">${totalCorrect}/${totalQs}</div>
+      <div class="sc-label">Rigtige svar i alt</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-num">${pct}%</div>
+      <div class="sc-label">Succesrate</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-num">${totalStars}/18</div>
+      <div class="sc-label">Stjerner samlet</div>
+    </div>
+  `;
+
+  const levelNames = ['Vælg grafen','Aflæs grafen','Opstil forskrift','To punkter','Løs ligning','Blandet'];
+  const levelIcons = ['📊','🔍','🦊','📍','⚖️','🏆'];
+  let listHTML = '<div style="font-weight:800;color:var(--forest-dark);margin-bottom:8px">Resultater per level:</div>';
+  for (let i=0;i<6;i++) {
+    const c = state.levelCorrect[i];
+    const t = state.levelTotal[i] || '—';
+    const s = state.levelStars[i];
+    const starsStr = s > 0 ? '⭐'.repeat(s) : '—';
+    const barW = t > 0 ? Math.round(c/t*100) : 0;
+    listHTML += `<div class="lsl-row">
+      <span class="lsl-name">${levelIcons[i]} Level ${i+1}: ${levelNames[i]}</span>
+      <span class="lsl-result">
+        ${c}/${t === '—' ? '?' : t} rigtige &nbsp; ${starsStr}
+      </span>
+    </div>`;
+  }
+  document.getElementById('levelSummaryList').innerHTML = listHTML;
+}
+
+function nextLevel() {
+  startLevel(state.currentLevel + 1);
+}
+
+function retryLevel() {
+  startLevel(state.currentLevel);
+}
+
+function backToMap() {
+  document.getElementById('gamePanel').style.display='none';
+  document.getElementById('levelMap').style.display='grid';
+  updateLevelMap();
+}
+
+function showResultFromMap() {
+  showFinalScreen();
+}
+
+function updateLevelMap() {
+  for (let i=0;i<6;i++) {
+    const btn = document.getElementById('lbtn'+(i+1));
+    const sDiv = document.getElementById('stars'+(i+1));
+    const s = state.levelStars[i];
+    sDiv.textContent = '⭐'.repeat(s)+'☆'.repeat(3-s);
+    btn.classList.remove('locked','completed','active-level');
+    const lock = btn.querySelector('.lock-icon');
+    if (!state.levelUnlocked[i]) {
+      btn.classList.add('locked');
+      if (!lock) btn.innerHTML += '<span class="lock-icon">🔒</span>';
+    } else {
+      if (lock) lock.remove();
+      if (s>0) btn.classList.add('completed');
+    }
+  }
+}
+
+// ===================== START LEVEL =====================
+function startLevel(n) {
+  if (!state.levelUnlocked[n-1]) return;
+  state.currentLevel = n;
+  state.currentQ = 0;
+  state.results = [null,null,null,null,null];
+  state.answered = false;
+
+  // Generate questions
+  if (n===1) state.levelQs = genLevel1();
+  else if (n===2) state.levelQs = genLevel2();
+  else if (n===3) state.levelQs = genLevel3();
+  else if (n===4) state.levelQs = genLevel4();
+  else if (n===5) state.levelQs = genLevel5();
+  else if (n===6) state.levelQs = genLevel6();
+
+  state.currentData = state.levelQs[0];
+
+  const titles = ['','Level 1: Vælg grafen','Level 2: Aflæs grafen','Level 3: Opstil forskrift','Level 4: To punkter','Level 5: Løs ligning','Level 6: Blandet 🏆'];
+  document.getElementById('panelTitle').textContent = titles[n];
+
+  document.getElementById('levelMap').style.display='none';
+  document.getElementById('gamePanel').style.display='block';
+  document.getElementById('questionArea').style.display='block';
+  document.getElementById('levelComplete').style.display='none';
+
+  // Set up dots
+  const nq = state.levelQs.length;
+  state.results = new Array(nq).fill(null);
+
+  renderQuestion(state.currentData);
+}
+
+// ===================== CHOICE CLICK FIX =====================
+// Delegate choice click
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('choice-btn') && !state.answered) {
+    const chosen = e.target.textContent.trim();
+    const q = state.currentData;
+    if (!q) return;
+    q._chosen = chosen;
+    // Highlight selected
+    document.querySelectorAll('.choice-btn').forEach(b=>b.style.background='');
+    e.target.style.background='#fff9c4';
+  }
+});
+
+// Init – welcome screen shown, levelMap hidden until name entered
+</script>
+</body>
+</html>
